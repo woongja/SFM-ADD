@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from typing import Union
 # AASIST에서 필요한 모듈들
 from torch import Tensor
 import numpy as np

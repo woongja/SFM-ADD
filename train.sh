@@ -8,20 +8,25 @@ export CUDA_VISIBLE_DEVICES=0   # 사용할 GPU 번호 (필요시 수정)
 # ========================
 # 경로 및 설정
 # ========================
-DATABASE_PATH="/AISRC2/Dataset"   # 실제 데이터셋 경로
-CONFIG_FILE="configs/config.yaml" # 설정 파일
+DATABASE_PATH="/home/woongjae/wildspoof/Datasets"   # 실제 데이터셋 경로
+CONFIG_FILE="/home/woongjae/wildspoof/SFM-ADD/configs/sfm_backend.yaml" # 설정 파일
 COMMENT="sfm_add_train"
+protocol_path="/home/woongjae/wildspoof/protocol/protocol.txt"
+MODEL_SAVE_PATH="out/best_model.pth"  # 모델 저장 경로
 
 # ========================
 # 훈련 실행
 # ========================
 python main.py \
   --database_path ${DATABASE_PATH} \
+  --protocol_path ${protocol_path} \
   --config ${CONFIG_FILE} \
-  --batch_size 8 \
+  --batch_size 16 \
   --num_epochs 100 \
   --min_lr 1e-7 \
   --max_lr 1e-4 \
   --weight_decay 1e-4 \
+  --patience 5 \
   --seed 1234 \
+  --model_save_path ${MODEL_SAVE_PATH} \
   --comment ${COMMENT}

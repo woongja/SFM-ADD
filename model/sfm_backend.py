@@ -44,6 +44,7 @@ class SSLModel(nn.Module):
 
 class SFM_ADD(nn.Module):
     def __init__(self, device, fusion="sum"):
+        super(SFM_ADD, self).__init__()
         self.xlsr = SSLModel(device)   # 1개만
         self.aasist = AASIST_Backend(input_dim=1024)
         self.conformer = ConformerTCM_Backend(input_dim=1024, emb_size=256)
@@ -71,7 +72,9 @@ class SFM_ADD(nn.Module):
             loss_a = F.cross_entropy(score_a, labels)
             loss_c = F.cross_entropy(score_c, labels)
             out["loss"] = 0.5*loss_a + 0.5*loss_c
-        
+            out["loss_a"] = loss_a
+            out["loss_c"] = loss_c
+
         return out
 
 

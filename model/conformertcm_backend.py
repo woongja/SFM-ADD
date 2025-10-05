@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # Conformer block 관련 모듈
-from conformer import ConformerBlock
+from .conformer import ConformerBlock
 from torch.nn.modules.transformer import _get_clones
 from torch import Tensor
 
