@@ -1,14 +1,10 @@
-1. Project Overview
+SFM-ADD: Shared-Feature Multi-Backend Architecture for Robust Audio Deepfake Detection
 
-SFM-ADD (Shared-Feature Multi-Backend Architecture for Robust Audio Deepfake Detection)
-본 프로젝트는 XLS-R 기반 공통 feature extractor를 사용하고,
-AASIST와 Conformer-TCM 두 가지 backend를 결합하여
-노이즈 환경에서도 견고한 딥페이크 음성 탐지를 목표로 합니다.
+Overview
+SFM-ADD는 XLS-R(300M) 기반의 공통 특징 추출기(Shared Feature Extractor) 를 중심으로,
+AASIST와 Conformer-TCM 두 개의 백엔드를 결합하여
+잡음 환경에서도 견고한 오디오 딥페이크 탐지를 수행하는 모델입니다.
 
-구조적으로:
-
-XLS-R(300M) → Shared Embedding Extractor
-
-AASIST + Conformer-TCM → Dual Backend
-
-Score Fusion + Joint Loss Training
+✅ Shared XLS-R Embedding
+✅ AASIST + Conformer-TCM Dual Backend
+✅ Score Fusion + Joint Loss Optimization
