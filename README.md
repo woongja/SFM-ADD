@@ -30,6 +30,8 @@ pip install -r requirements.txt
 ```
 install fairseq:
 ```bash
+pip install "pip<24.1"
+
 git clone https://github.com/facebookresearch/fairseq.git fairseq_dir
 cd fairseq_dir
 git checkout a54021305d6b3c
