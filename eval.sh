@@ -5,23 +5,18 @@
 # ========================
 DATABASE_PATH="/home/woongjae/wildspoof/Datasets"   # 실제 데이터셋 경로
 CONFIG_FILE="/home/woongjae/wildspoof/SFM-ADD/configs/sfm_backend.yaml" # 설정 파일
-COMMENT="sfm_add_train"
 protocol_path="/home/woongjae/wildspoof/protocol/protocol.txt"
-MODEL_SAVE_PATH="out/best_model.pth"  # 모델 저장 경로
+MODEL_PATH="/home/woongjae/wildspoof/SFM-ADD/out/1.pth"  # 학습된 모델 경로
+EVAL_OUTPUT="eval_scores.txt"  # 평가 결과 저장 경로
 
 # ========================
-# 훈련 실행
+# 평가 실행
 # ========================
-CUDA_VISIBLE_DEVICES=3 python main.py \
+CUDA_VISIBLE_DEVICES=2 python main.py \
+  --eval \
   --database_path ${DATABASE_PATH} \
   --protocol_path ${protocol_path} \
   --config ${CONFIG_FILE} \
-  --batch_size 32 \
-  --num_epochs 100 \
-  --min_lr 1e-7 \
-  --max_lr 1e-4 \
-  --weight_decay 1e-4 \
-  --patience 10 \
-  --seed 1234 \
-  --model_save_path ${MODEL_SAVE_PATH} \
-  --comment ${COMMENT}
+  --model_path ${MODEL_PATH} \
+  --eval_output ${EVAL_OUTPUT} \
+  --batch_size 128

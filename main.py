@@ -21,7 +21,7 @@ from datautils.data_utils import genSpoof_list, Dataset_eval, Dataset_train
 def eval_model(args, config, device):
     
     # Load protocol
-    file_eval = genSpoof_list(os.path.join(args.database_path, "protocol.txt"), is_eval=True)
+    file_eval = genSpoof_list(args.protocol_path, is_eval=True)
 
     # Dataset
     eval_set = Dataset_eval(list_IDs=file_eval, base_dir=args.database_path)
@@ -40,14 +40,17 @@ def eval_model(args, config, device):
     model.eval()
 
     # Run evaluation
-    with torch.no_grad(), open(args.eval_output, "w") as f:
-        for batch_x, utt_id in tqdm(eval_loader, ncols=90):
+    with torch.no_grad(), open(args.eval_output, 'w') as fh:
+        for batch_x, utt_id in tqdm(eval_loader, desc="Evaluation", leave=False):
             batch_x = batch_x.to(device)
-            out = model(batch_x)
-            logits = out["logits"]
-            scores = torch.softmax(logits, dim=1)  # [bonafide, spoof]
-            for u, s in zip(utt_id, scores.cpu().numpy()):
-                f.write(f"{u} {s[0]:.6f} {s[1]:.6f}\n")
+            batch_out = model(batch_x)
+
+            # Extract logits from dict output
+            logits = batch_out["logits"]
+            score_list = logits.cpu().numpy().tolist()
+
+            for f, cm in zip(utt_id, score_list):
+                fh.write('{} {} {}\n'.format(f, cm[0], cm[1]))
 
     print(f"[INFO] Eval scores saved to {args.eval_output}")
 
@@ -97,7 +100,7 @@ def eval_epoch(dev_loader, model, device):
     num_batches = 0
 
     with torch.no_grad():
-        for info, batch_x, batch_y in tqdm(dev_loader, ncols=90):
+        for batch_x, batch_y in tqdm(dev_loader, ncols=90):
             batch_x, batch_y = batch_x.to(device), batch_y.to(device).long()
             out = model(batch_x, labels=batch_y)
             loss = out["loss"]
