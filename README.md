@@ -13,3 +13,18 @@ AASIST와 Conformer-TCM 두 개의 백엔드를 결합하여
 ✅ Score Fusion + Joint Loss Optimization  
 
 ---
+
+### 1️⃣ Conda 환경 생성
+```bash
+conda create -n sfm python=3.9 -y
+conda activate sfm
+```
+
+```bash
+# ex1)
+pip install torch==2.8.0 torchvision==0.19.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu129
+# ex2)
+pip install torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 --index-url https://download.pytorch.org/whl/cu118
+
+pip install -r requirements.txt
+```
