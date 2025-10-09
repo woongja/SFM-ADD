@@ -28,3 +28,10 @@ pip install torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 --index-url https
 
 pip install -r requirements.txt
 ```
+install fairseq:
+```bash
+git clone https://github.com/facebookresearch/fairseq.git fairseq_dir
+cd fairseq_dir
+git checkout a54021305d6b3c
+pip install --editable ./
+```
