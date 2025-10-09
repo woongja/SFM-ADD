@@ -30,7 +30,6 @@ class SSLModel(nn.Module):
             self.model.to(input_data.device, dtype=input_data.dtype)
             self.model.train()
 
-        
         if True:
             # input should be in shape (batch, length)
             if input_data.ndim == 3:
@@ -43,7 +42,7 @@ class SSLModel(nn.Module):
         return emb
 
 class SFM_ADD(nn.Module):
-    def __init__(self, device, fusion="sum"):
+    def __init__(self, device, fusion="learnable"):
         super(SFM_ADD, self).__init__()
         self.xlsr = SSLModel(device)   # 1개만
         self.aasist = AASIST_Backend(input_dim=1024)

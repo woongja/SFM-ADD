@@ -1,0 +1,9 @@
+itw:
+  database_path: /home/woongjae/wildspoof/Datasets/itw
+  protocol_path: /home/woongjae/wildspoof/protocols/protocol_itw.txt
+  eval_output: /home/woongjae/wildspoof/SFM-ADD/results/eval_itw.txt
+
+add2022:
+  database_path: /home/woongjae/wildspoof/Datasets/add2022
+  protocol_path: /home/woongjae/wildspoof/protocols/protocol_add2022.txt
+  eval_output: /home/woongjae/wildspoof/SFM-ADD/results/eval_add2022.txt

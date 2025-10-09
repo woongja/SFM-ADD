@@ -14,6 +14,8 @@ from datautils import SUPPORTED_DATALOADERS
 from model import SUPPORTED_MODELS
 from datautils.data_utils import genSpoof_list, Dataset_eval, Dataset_train
 
+import pandas as pd
+from evaluate_metrics import compute_eer
 
 ############################################
 # Evaluation Function
@@ -54,6 +56,22 @@ def eval_model(args, config, device):
 
     print(f"[INFO] Eval scores saved to {args.eval_output}")
 
+    eer(args)
+    print("[INFO] Evaluation complete.")
+
+def eer(args):
+    eval_df = pd.read_csv(args.protocol_path, sep=" ", header=None)
+    eval_df.columns = ["utt","subset","label"]
+    pred_df = pd.read_csv(args.eval_output, sep=" ", header=None)
+    pred_df.columns = ["utt", "spoof", "bonafide"]
+
+    res_df = pd.merge(eval_df, pred_df, on='utt')
+
+    spoof_scores = res_df[res_df['label'] == 'spoof']['bonafide']
+    bonafide_scores = res_df[res_df['label'] == 'bonafide']['bonafide']
+
+    eer, threshold = compute_eer(bonafide_scores, spoof_scores)
+    print("EER: {:.4f}%, threshold: {:.4f}".format(eer*100, threshold))
 
 ############################################
 # Training Functions

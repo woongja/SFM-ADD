@@ -1,22 +1,58 @@
 #!/bin/bash
 
+# ===================================
+# [사용법] bash eval.sh <dataset_name>
+# 예시: bash eval.sh itw
+# ===================================
+
 # ========================
-# 경로 및 설정
+# 인자 확인
 # ========================
-DATABASE_PATH="/home/woongjae/wildspoof/Datasets"   # 실제 데이터셋 경로
-CONFIG_FILE="/home/woongjae/wildspoof/SFM-ADD/configs/sfm_backend.yaml" # 설정 파일
-protocol_path="/home/woongjae/wildspoof/protocol/protocol.txt"
-MODEL_PATH="/home/woongjae/wildspoof/SFM-ADD/out/1.pth"  # 학습된 모델 경로
-EVAL_OUTPUT="eval_scores.txt"  # 평가 결과 저장 경로
+if [ $# -ne 1 ]; then
+  echo "❌ Usage: bash eval.sh <dataset_name>"
+  echo "예: bash eval.sh itw"
+  exit 1
+fi
+
+DATASET=$1
+
+# ========================
+# 설정 파일
+# ========================
+DATASET_YAML="/home/woongjae/wildspoof/SFM-ADD/configs/dataset.yaml"
+CONFIG_FILE="/home/woongjae/wildspoof/SFM-ADD/configs/sfm_backend.yaml"
+MODEL_PATH="/home/woongjae/wildspoof/SFM-ADD/out/best_model.pth"
+
+# ========================
+# YAML 파서(yq로 읽기)
+# ========================
+DATABASE_PATH=$(yq ".${DATASET}.database_path" ${DATASET_YAML})
+PROTOCOL_PATH=$(yq ".${DATASET}.protocol_path" ${DATASET_YAML})
+EVAL_OUTPUT=$(yq ".${DATASET}.eval_output" ${DATASET_YAML})
+
+# 🔧 따옴표 제거 (sed 사용)
+DATABASE_PATH=$(echo $DATABASE_PATH | sed 's/"//g')
+PROTOCOL_PATH=$(echo $PROTOCOL_PATH | sed 's/"//g')
+EVAL_OUTPUT=$(echo $EVAL_OUTPUT | sed 's/"//g')
+
+# ========================
+# 값 확인
+# ========================
+echo "=========================================="
+echo "🚀 Dataset: ${DATASET}"
+echo "📂 DATABASE_PATH: ${DATABASE_PATH}"
+echo "📜 PROTOCOL_PATH: ${PROTOCOL_PATH}"
+echo "💾 EVAL_OUTPUT: ${EVAL_OUTPUT}"
+echo "=========================================="
 
 # ========================
 # 평가 실행
 # ========================
-CUDA_VISIBLE_DEVICES=2 python main.py \
+CUDA_VISIBLE_DEVICES=0 python /home/woongjae/wildspoof/SFM-ADD/main.py \
   --eval \
-  --database_path ${DATABASE_PATH} \
-  --protocol_path ${protocol_path} \
-  --config ${CONFIG_FILE} \
-  --model_path ${MODEL_PATH} \
-  --eval_output ${EVAL_OUTPUT} \
-  --batch_size 128
+  --database_path "${DATABASE_PATH}" \
+  --protocol_path "${PROTOCOL_PATH}" \
+  --config "${CONFIG_FILE}" \
+  --model_path "${MODEL_PATH}" \
+  --eval_output "${EVAL_OUTPUT}" \
+  --batch_size 4
