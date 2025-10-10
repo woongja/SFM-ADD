@@ -3,8 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import fairseq
 
-from model.aasist_backend import AASIST_Backend
-from model.conformertcm_backend import ConformerTCM_Backend
+# from model.aasist_backend import AASIST_Backend
+# from model.conformertcm_backend import ConformerTCM_Backend
+from model.aasist_backend_light import AASIST_Backend
+from model.conformertcm_backend_light import ConformerTCM_Backend
 
 ############################
 ## FOR fine-tuned SSL MODEL

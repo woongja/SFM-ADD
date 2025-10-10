@@ -12,16 +12,16 @@ MODEL_SAVE_PATH="out/best_model.pth"  # 모델 저장 경로
 # ========================
 # 훈련 실행
 # ========================
-CUDA_VISIBLE_DEVICES=3 python main.py \
+CUDA_VISIBLE_DEVICES=MIG-8cdeef83-092c-5a8d-a748-452f299e1df0 python main.py \
   --database_path ${DATABASE_PATH} \
   --protocol_path ${protocol_path} \
   --config ${CONFIG_FILE} \
-  --batch_size 32 \
+  --batch_size 64 \
   --num_epochs 100 \
   --min_lr 1e-7 \
   --max_lr 1e-4 \
   --weight_decay 1e-4 \
-  --patience 10 \
+  --patience 5 \
   --seed 1234 \
   --model_save_path ${MODEL_SAVE_PATH} \
   --comment ${COMMENT}
