@@ -6,8 +6,8 @@
 DATABASE_PATH="/home/woongjae/wildspoof/Datasets"   # 실제 데이터셋 경로
 CONFIG_FILE="/home/woongjae/wildspoof/SFM-ADD/configs/sfm_backend.yaml" # 설정 파일
 COMMENT="sfm_add_train"
-protocol_path="/home/woongjae/wildspoof/protocol/protocol.txt"
-MODEL_SAVE_PATH="out/best_model.pth"  # 모델 저장 경로
+protocol_path="/home/woongjae/wildspoof/protocol/protocol_1.txt"
+MODEL_SAVE_PATH="out/light_2.pth"  # 모델 저장 경로
 
 # ========================
 # 훈련 실행

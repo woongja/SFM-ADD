@@ -38,12 +38,44 @@ def genSpoof_list(dir_meta, is_train=False, is_eval=False):
         return d_meta, file_list
 
 
-def pad(x, max_len=64600):
-    x_len = x.shape[0]
+def pad(
+    x: np.ndarray,
+    padding_type: str = "repeat",
+    max_len: int = 64000,
+    random_start: bool = True
+) -> np.ndarray:
+    """
+    Pad or crop an audio signal to a fixed length.
+
+    Args:
+        x: np.ndarray - input waveform
+        padding_type: str - 'zero' or 'repeat'
+        max_len: int - output length
+        random_start: bool - if True, randomly choose crop start point
+    """
+    x_len = len(x)
+    padded_x = None
+
+    if max_len <= 0:
+        raise ValueError("max_len must be >= 0")
+
     if x_len >= max_len:
-        return x[:max_len]
-    num_repeats = int(max_len / x_len) + 1
-    padded_x = np.tile(x, (1, num_repeats))[:, :max_len][0]
+        # 길면 자르기 (랜덤 스타트 선택 가능)
+        if random_start:
+            start = np.random.randint(0, x_len - max_len + 1)
+            padded_x = x[start:start + max_len]
+        else:
+            padded_x = x[:max_len]
+
+    else:
+        # 짧으면 패딩 or 반복
+        if padding_type == "repeat":
+            num_repeats = int(max_len / x_len) + 1
+            padded_x = np.tile(x, num_repeats)[:max_len]
+        elif padding_type == "zero":
+            padded_x = np.zeros(max_len, dtype=x.dtype)
+            padded_x[:x_len] = x
+
     return padded_x
 
 
@@ -147,7 +179,7 @@ def process_Rawboost_feature(feature, sr, args, algo, prob=0.5, random_algo=Fals
 
 
 class Dataset_train(Dataset):
-    def __init__(self, args, list_IDs, labels, base_dir, algo, rb_prob=0.5, random_algo=False):
+    def __init__(self, args, list_IDs, labels, base_dir, algo, rb_prob=0.5, random_algo=False, random_start=True):
         self.list_IDs = list_IDs
         self.labels = labels
         self.base_dir = base_dir
@@ -156,6 +188,7 @@ class Dataset_train(Dataset):
         self.cut = 64600
         self.rb_prob = rb_prob  # RawBoost 확률
         self.random_algo = random_algo  # 알고리즘 무작위 선택 여부
+        self.random_start = random_start  # 패딩 시 랜덤 스타트 여부
 
     def __len__(self):
         return len(self.list_IDs)
@@ -171,7 +204,7 @@ class Dataset_train(Dataset):
             prob=self.rb_prob, random_algo=self.random_algo
         )
 
-        X_pad = pad(X, self.cut)
+        X_pad = pad(X, max_len=self.cut, random_start=self.random_start)
         x_inp = Tensor(X_pad)
         target = self.labels[utt_id]
         return x_inp, target

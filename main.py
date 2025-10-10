@@ -190,7 +190,8 @@ def main(args):
         list_IDs=file_train,
         labels=d_label_trn,
         base_dir=args.database_path,
-        algo=args.algo
+        algo=args.algo,
+        random_start=True
     )
 
     dev_set = Dataset_for(
