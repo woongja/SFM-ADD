@@ -21,7 +21,7 @@ DATASET=$1
 # ========================
 DATASET_YAML="/home/woongjae/wildspoof/SFM-ADD/configs/dataset.yaml"
 CONFIG_FILE="/home/woongjae/wildspoof/SFM-ADD/configs/sfm_backend.yaml"
-MODEL_PATH="/home/woongjae/wildspoof/SFM-ADD/out/best_model.pth"
+MODEL_PATH="/home/woongjae/wildspoof/SFM-ADD/out/light_2.pth"
 
 # ========================
 # YAML 파서(yq로 읽기)
@@ -48,11 +48,11 @@ echo "=========================================="
 # ========================
 # 평가 실행
 # ========================
-CUDA_VISIBLE_DEVICES=0 python /home/woongjae/wildspoof/SFM-ADD/main.py \
+CUDA_VISIBLE_DEVICES=MIG-8cdeef83-092c-5a8d-a748-452f299e1df0 python /home/woongjae/wildspoof/SFM-ADD/main.py \
   --eval \
   --database_path "${DATABASE_PATH}" \
   --protocol_path "${PROTOCOL_PATH}" \
   --config "${CONFIG_FILE}" \
   --model_path "${MODEL_PATH}" \
   --eval_output "${EVAL_OUTPUT}" \
-  --batch_size 4
+  --batch_size 32

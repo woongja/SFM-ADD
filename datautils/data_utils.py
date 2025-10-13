@@ -40,7 +40,7 @@ def genSpoof_list(dir_meta, is_train=False, is_eval=False):
 
 def pad(
     x: np.ndarray,
-    padding_type: str = "repeat",
+    padding_type: str = "zero",
     max_len: int = 64000,
     random_start: bool = True
 ) -> np.ndarray:
@@ -223,6 +223,6 @@ class Dataset_eval(Dataset):
         utt_id = self.list_IDs[index]
         wav_path = os.path.join(self.base_dir, utt_id)
         X, fs = librosa.load(wav_path, sr=16000)
-        X_pad = pad(X, self.cut)
+        X_pad = pad(X, max_len=self.cut, random_start=False)
         x_inp = Tensor(X_pad)
         return x_inp, utt_id
