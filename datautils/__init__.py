@@ -1,3 +1,4 @@
-from .data_utils import SUPPORTED_DATALOADERS
+from . import data_utils
+from . import data_utils_balance
 
-SUPPORTED_DATALOADERS = ["data_utils"]
+SUPPORTED_DATALOADERS = ["data_utils", "data_utils_balance"]

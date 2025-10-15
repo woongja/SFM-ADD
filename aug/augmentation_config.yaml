@@ -1,0 +1,62 @@
+background_noise:
+  aug_type: background_noise
+  noise_path: "/home/woongjae/wildspoof/Datasets/noise"
+
+background_music:
+  aug_type: background_music
+  music_path: "/home/woongjae/wildspoof/Datasets/music"
+
+gaussian_noise:
+  aug_type: gaussian_noise
+  min_std_dev: 0.01
+  max_std_dev: 0.2
+  mean: 0.0
+
+high_pass_filter:
+  aug_type: high_pass_filter
+  min_cutoff_freq: 2000
+  max_cutoff_freq: 4000
+
+low_pass_filter:
+  aug_type: low_pass_filter
+  min_cutoff_freq: 300
+  max_cutoff_freq: 1500
+
+freq_minus:
+  aug_type: freq_minus
+  num_operations: 5
+  max_freq: 4300
+  min_energy: 0.01
+  max_energy: 0.3
+
+freq_plus:
+  aug_type: freq_plus
+  num_operations: 5
+  max_freq: 4300
+  min_energy: 0.01
+  max_energy: 0.3
+
+pitch_shift:
+  aug_type: pitch_shift
+  min_semitones: -5
+  max_semitones: 5
+
+time_stretch:
+  aug_type: time_stretch
+  min_factor: 0.6
+  max_factor: 1.4
+
+auto_tune:
+  aug_type: auto_tune
+  correction_method: closest
+
+echo:
+  aug_type: echo
+  min_delay: 0.05
+  max_delay: 1.5
+  min_decay: 0.2
+  max_decay: 1.0
+
+reverberation:
+  aug_type: reverberation
+  rir_path: "/home/woongjae/wildspoof/Datasets/RIRS_NOISES"
