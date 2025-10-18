@@ -255,6 +255,57 @@ class Dataset_train(Dataset):
 
 
 
+class Dataset_dev(Dataset):
+    """
+    Dev set용 Dataset with random augmentation for spoof samples only
+
+    Dev set 구성:
+    - Bonafide: clean + augmented 샘플 모두 존재 → 그대로 사용
+    - Spoof: clean 샘플만 존재 → 랜덤하게 augmentation 적용
+
+    Spoof 샘플에는 12개 noise type 중 하나를 랜덤하게 적용:
+    - 11개 augmentation + 1개 clean = 총 12개
+    """
+    def __init__(self, list_IDs, labels, noise_labels, base_dir):
+        self.list_IDs = list_IDs
+        self.labels = labels
+        self.noise_labels = noise_labels
+        self.base_dir = base_dir
+        self.cut = 64600
+
+        # 12개 noise types (11 augmentation + clean)
+        self.augmentation_noise_types = [
+            'auto_tune', 'background_music', 'background_noise', 'bandpassfilter',
+            'echo', 'gaussian_noise', 'pink_noise', 'pitch_shift',
+            'reverberation', 'time_stretch', 'white_noise', 'clean'
+        ]
+
+    def __len__(self):
+        return len(self.list_IDs)
+
+    def __getitem__(self, index):
+        utt_id = self.list_IDs[index]
+        wav_path = os.path.join(self.base_dir, utt_id)
+        X, fs = librosa.load(wav_path, sr=16000)
+
+        target = self.labels[utt_id]
+        original_noise = self.noise_labels[utt_id]
+
+        # Spoof 샘플이고 clean인 경우만 랜덤 augmentation 적용
+        if target == 0 and original_noise == 'clean':  # 0 = spoof
+            noise_type = random.choice(self.augmentation_noise_types)
+            if noise_type != 'clean':
+                X = apply_online_augmentation(X, fs, noise_type)
+        else:
+            # Bonafide 샘플은 그대로 사용 (이미 augmented이거나 clean)
+            noise_type = original_noise
+
+        X_pad = pad(X, max_len=self.cut, random_start=True)
+        x_inp = Tensor(X_pad)
+
+        return x_inp, target, noise_type
+
+
 class Dataset_eval(Dataset):
     def __init__(self, list_IDs, base_dir):
         self.list_IDs = list_IDs

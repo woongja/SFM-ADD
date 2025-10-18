@@ -10,6 +10,7 @@ data:
   n_fft: 512
   hop_length: 160
   win_length: 400
+  
   fmin: 20
   fmax: 7600
   mean_norm: true

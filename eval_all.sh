@@ -11,7 +11,7 @@ for DATASET in "${DATASETS[@]}"; do
   echo "🚀 Running evaluation for: ${DATASET}"
   echo "=========================================="
   
-  bash eval.sh "${DATASET}"
+  bash eval_balance.sh "${DATASET}"
   
   # 오류 발생 시 중단
   if [ $? -ne 0 ]; then

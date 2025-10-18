@@ -19,9 +19,9 @@ DATASET=$1
 # ========================
 # 설정 파일
 # ========================
-DATASET_YAML="/home/woongjae/wildspoof/SFM-ADD/configs/dataset.yaml"
-CONFIG_FILE="/home/woongjae/wildspoof/SFM-ADD/configs/sfm_backend.yaml"
-MODEL_PATH="/home/woongjae/wildspoof/SFM-ADD/out/light_2.pth"
+DATASET_YAML="/home/woongjae/wildspoof/SFM-ADD/configs/dataset_conformertcm.yaml"
+CONFIG_FILE="/home/woongjae/wildspoof/SFM-ADD/configs/conformertcm_baseline.yaml"
+MODEL_PATH="/home/woongjae/wildspoof/SFM-ADD/out/conformertcm.pth"
 
 # ========================
 # YAML 파서(yq로 읽기)
@@ -48,7 +48,7 @@ echo "=========================================="
 # ========================
 # 평가 실행
 # ========================
-CUDA_VISIBLE_DEVICES=MIG-8cdeef83-092c-5a8d-a748-452f299e1df0 python /home/woongjae/wildspoof/SFM-ADD/main.py \
+CUDA_VISIBLE_DEVICES=MIG-57de94a5-be15-5b5a-b67e-e118352d8a59 python /home/woongjae/wildspoof/SFM-ADD/balance_training.py \
   --eval \
   --database_path "${DATABASE_PATH}" \
   --protocol_path "${PROTOCOL_PATH}" \
