@@ -1,0 +1,62 @@
+# Conformer-TCM Balanced Training with Supervised Contrastive Learning (SCL)
+# All augmentation types in each mini-batch + Augmentation-aware contrastive loss
+
+model:
+  name: conformertcm_scl
+  emb_size: 144
+  heads: 4
+  kernel_size: 31
+  num_encoders: 4
+
+data:
+  name: data_utils_balance_scl  # Use SCL version with augmentation type info
+  n_mels: 64
+  n_fft: 512
+  hop_length: 160
+  win_length: 400
+  fmin: 20
+  fmax: 7600
+  mean_norm: true
+  std_norm: true
+
+# Supervised Contrastive Learning Configuration
+contrastive_learning:
+  enabled: true
+
+  # Weighted contrastive loss
+  weighted_loss: true    # true: use weighted loss (same/diff aug), false: standard SupCon
+
+  # Loss type selection
+  loss_type: 1
+  # 1: L_CE + L_CF1 + L_CF2 (all three losses)
+  # 2: L_CE + L_CF1 (classification + contrastive on features)
+  # 3: L_CE + L_CF2 (classification + contrastive on embeddings)
+  # 4: L_CE only (classification only)
+  # 5: L_CF1 + L_CF2 (contrastive only, no classification)
+
+  # Contrastive loss settings
+  temperature: 0.07
+  contra_mode: 'all'  # 'all' or 'one'
+
+  # Weighting parameters (only used if weighted_loss: true)
+  same_aug_weight: 0.3    # Weight for same label + same augmentation
+  diff_aug_weight: 0.7    # Weight for same label + different augmentation
+
+# Balanced Training Strategy:
+# Each mini-batch contains:
+#   - 10 augmentation types × 2 (bonafide + spoof) = 20 samples
+#   - 2 clean (1 bonafide + 1 spoof) = 2 samples
+#   Total = 22 samples per batch
+#
+# Loss Components:
+#   L_CE: Cross-Entropy loss for classification (bonafide vs spoof)
+#   L_CF1: Contrastive loss on intermediate features (after LL layer)
+#   L_CF2: Contrastive loss on final embeddings (after conformer)
+#
+# Weighted Contrastive Learning (if weighted_loss: true):
+#   Positive pairs with SAME augmentation → weight = 0.3 (easy, already similar)
+#   Positive pairs with DIFFERENT augmentation → weight = 0.7 (hard, should be close!)
+#   This encourages robust representations across diverse augmentations
+#
+# Standard Contrastive Learning (if weighted_loss: false):
+#   All positive pairs → equal weight (baseline for comparison)

@@ -24,8 +24,15 @@ def eval_model(args, config, device):
     data_module = importlib.import_module("datautils." + config["data"]["name"])
     genSpoof_list = data_module.genSpoof_list
     Dataset_eval = data_module.Dataset_eval
-    # Load protocol
-    file_eval = genSpoof_list(args.protocol_path, is_eval=True)
+
+    # Load protocol - different return values depending on data module
+    eval_result = genSpoof_list(args.protocol_path, is_eval=True)
+    if isinstance(eval_result, tuple):
+        # data_utils_balance returns (file_list, noise_dict)
+        file_eval, _ = eval_result
+    else:
+        # data_utils_curriculum returns file_list only
+        file_eval = eval_result
 
     # Dataset
     eval_set = Dataset_eval(list_IDs=file_eval, base_dir=args.database_path)
@@ -88,7 +95,7 @@ def eer(args):
 ############################################
 # Training Functions
 ############################################
-def train_epoch(train_loader, model, optimizer, device, epoch, use_balance_training=True):
+def train_epoch(train_loader, model, optimizer, device, epoch, use_balance_training=True, use_curriculum=False, curriculum_stage=1):
 
     model.train()
     running_loss = 0.0
@@ -99,37 +106,58 @@ def train_epoch(train_loader, model, optimizer, device, epoch, use_balance_train
     weight = torch.FloatTensor([0.1, 0.9]).to(device)
     criterion = nn.CrossEntropyLoss(weight=weight)
 
-    if use_balance_training:
-        # BALANCE TRAINING MODE
+    if use_balance_training or use_curriculum:
+        # BALANCE TRAINING MODE OR CURRICULUM LEARNING MODE
         # Unpack train_loader (sampler, base_dir, args)
         train_sampler, base_dir, args = train_loader
 
         # Import collate function
         import importlib
         from collections import defaultdict
-        data_module = importlib.import_module("datautils.data_utils_balance")
+        if use_curriculum:
+            data_module = importlib.import_module("datautils.data_utils_curriculum")
+        else:
+            data_module = importlib.import_module("datautils.data_utils_balance")
         online_augmentation_collate_fn = data_module.online_augmentation_collate_fn
 
         # Track augmentation statistics for the entire epoch
         epoch_aug_stats = defaultdict(int)
 
-        pbar = tqdm(train_sampler, ncols=120, desc=f"Epoch {epoch} [Train]", total=len(train_sampler))
+        # Set description based on mode
+        if use_curriculum:
+            desc = f"Epoch {epoch} [Train - Stage {curriculum_stage}]"
+        else:
+            desc = f"Epoch {epoch} [Train]"
+
+        pbar = tqdm(train_sampler, ncols=120, desc=desc, total=len(train_sampler))
         for batch_idx, batch_info in enumerate(pbar):
             # Apply online augmentation and create batch
             # Log augmentation only for first batch to verify
             log_aug = (batch_idx == 0)
             if log_aug:
-                batch_x, batch_y, _, batch_aug_stats = online_augmentation_collate_fn(batch_info, base_dir, args, log_augmentation=True)
+                if use_curriculum:
+                    batch_x, batch_y, _, batch_aug_stats = online_augmentation_collate_fn(
+                        batch_info, base_dir, args, curriculum_stage=curriculum_stage, log_augmentation=True)
+                else:
+                    batch_x, batch_y, _, batch_aug_stats = online_augmentation_collate_fn(
+                        batch_info, base_dir, args, log_augmentation=True)
                 # Accumulate stats
                 for aug_type, count in batch_aug_stats.items():
                     epoch_aug_stats[aug_type] += count
                 # Print immediately after first batch
-                print(f"\n[Augmentation Summary - First Batch of Epoch {epoch}]")
+                if use_curriculum:
+                    print(f"\n[Augmentation Summary - First Batch of Epoch {epoch} - Curriculum Stage {curriculum_stage}]")
+                else:
+                    print(f"\n[Augmentation Summary - First Batch of Epoch {epoch}]")
                 for aug_type in sorted(batch_aug_stats.keys()):
                     print(f"  ✓ {aug_type}: {batch_aug_stats[aug_type]} samples")
                 print()  # Empty line for readability
             else:
-                batch_x, batch_y, _ = online_augmentation_collate_fn(batch_info, base_dir, args)
+                if use_curriculum:
+                    batch_x, batch_y, _ = online_augmentation_collate_fn(
+                        batch_info, base_dir, args, curriculum_stage=curriculum_stage)
+                else:
+                    batch_x, batch_y, _ = online_augmentation_collate_fn(batch_info, base_dir, args)
 
             batch_x, batch_y = batch_x.to(device), batch_y.to(device).long()
 
@@ -282,10 +310,26 @@ def main(args):
     data_module = importlib.import_module("datautils." + config["data"]["name"])
     genList = data_module.genSpoof_list
 
-    # Check if using balance training mode or baseline mode
-    use_balance_training = hasattr(data_module, 'BalancedNoiseSampler')
+    # Check training mode: curriculum, balance, or baseline
+    use_curriculum = config["data"]["name"] == "data_utils_curriculum"
+    use_balance_training = hasattr(data_module, 'BalancedNoiseSampler') and not use_curriculum
 
-    if use_balance_training:
+    if use_curriculum:
+        print("[INFO] Using CURRICULUM LEARNING mode with CurriculumNoiseSampler")
+        # Load curriculum config
+        curriculum_config = config.get("curriculum", {})
+        if not curriculum_config.get("enabled", False):
+            print("[WARNING] Curriculum config found but not enabled. Using as balance training.")
+            use_curriculum = False
+            use_balance_training = True
+        else:
+            Dataset_train = data_module.Dataset_train
+            Dataset_dev = data_module.Dataset_dev
+            Dataset_eval = data_module.Dataset_eval
+            CurriculumNoiseSampler = data_module.CurriculumNoiseSampler
+            online_augmentation_collate_fn = data_module.online_augmentation_collate_fn
+            print(f"[INFO] Curriculum stages: {len([k for k in curriculum_config.keys() if k.startswith('stage')])}")
+    elif use_balance_training:
         print("[INFO] Using BALANCE TRAINING mode with BalancedNoiseSampler")
         Dataset_for = data_module.Dataset_train
         Dataset_dev = data_module.Dataset_dev
@@ -302,7 +346,7 @@ def main(args):
     # ---------------------------------------
     # Train/Dev Split 불러오기
     # ---------------------------------------
-    if use_balance_training:
+    if use_balance_training or use_curriculum:
         d_label_trn, file_train, noise_trn, clean_bonafide_trn, clean_spoof_trn = genList(args.protocol_path, is_train=True)
         d_label_dev, file_dev, noise_dev = genList(args.protocol_path, is_train=False)
     else:
@@ -310,13 +354,40 @@ def main(args):
         d_label_dev, file_dev = genList(args.protocol_path, is_train=False)
 
     print(f"[INFO] Loaded {len(file_train)} training and {len(file_dev)} validation samples")
-    if use_balance_training:
+    if use_balance_training or use_curriculum:
         print(f"[INFO] Clean bonafide: {len(clean_bonafide_trn)}, Clean spoof: {len(clean_spoof_trn)}")
 
     # ---------------------------------------
     # Dataset 생성 및 DataLoader 설정
     # ---------------------------------------
-    if use_balance_training:
+    if use_curriculum:
+        # CURRICULUM LEARNING MODE
+        # Note: DataLoader will be recreated for each curriculum stage in training loop
+        dev_set = Dataset_dev(
+            list_IDs=file_dev,
+            labels=d_label_dev,
+            noise_labels=noise_dev,
+            base_dir=args.database_path
+        )
+
+        dev_loader = DataLoader(
+            dev_set,
+            batch_size=args.batch_size,
+            shuffle=False,
+            num_workers=4
+        )
+
+        # Prepare data for curriculum sampler creation (done in training loop per stage)
+        curriculum_data = {
+            'noise_labels': noise_trn,
+            'label_dict': d_label_trn,
+            'clean_bonafide_list': clean_bonafide_trn,
+            'clean_spoof_list': clean_spoof_trn,
+            'base_dir': args.database_path,
+            'args': args
+        }
+
+    elif use_balance_training:
         # BALANCE TRAINING MODE
         # Dev set: Apply random augmentation to spoof samples only
         # - Bonafide: use as-is (already has augmented samples)
@@ -336,7 +407,7 @@ def main(args):
             clean_bonafide_list=clean_bonafide_trn,
             clean_spoof_list=clean_spoof_trn,
             base_dir=args.database_path,
-            batch_size=24  # 11 aug bonafide + 11 aug spoof + 2 clean = 24
+            batch_size=args.batch_size  # 11 aug bonafide + 11 aug spoof + 2 clean = 24
         )
 
         # Store sampler and args for use in train_epoch
@@ -436,65 +507,217 @@ def main(args):
 
     start_time_total = time.time()
 
-    for epoch in range(args.start_epoch, args.num_epochs):
-        print(f"\n{'='*80}")
-        print(f"Epoch {epoch+1}/{args.num_epochs}")
-        print(f"{'='*80}")
+    if use_curriculum:
+        # CURRICULUM LEARNING MODE
+        # Parse curriculum stages from config
+        stages = []
+        for key in sorted(curriculum_config.keys()):
+            # Only match stage1, stage2, etc (not stage_patience)
+            if key.startswith('stage') and key[5:].isdigit():
+                stage_num = int(key.replace('stage', ''))
+                stage_epochs = curriculum_config[key]['epochs']
+                stages.append((stage_num, stage_epochs))
 
-        epoch_start_time = time.time()
+        # Check early stopping strategy
+        early_stopping_per_stage = curriculum_config.get('early_stopping_per_stage', False)
+        stage_patience_limit = curriculum_config.get('stage_patience', 5)
 
-        # Train
-        tr_loss, tr_acc = train_epoch(train_loader, model, optimizer, device, epoch, use_balance_training)
-
-        # Validate
-        val_loss, val_acc = eval_epoch(dev_loader, model, device, epoch, use_balance_training)
-
-        epoch_time = time.time() - epoch_start_time
-
-        # Calculate loss delta
-        if epoch > args.start_epoch:
-            loss_delta = val_loss - prev_val_loss
-            loss_delta_str = f"({loss_delta:+.4f})"
+        print(f"[INFO] Curriculum Learning Schedule:")
+        if early_stopping_per_stage:
+            print(f"  Early Stopping: PER-STAGE (patience={stage_patience_limit})")
+            print(f"  Stage epochs = MAX limit (will stop early if no improvement)")
         else:
-            loss_delta_str = ""
+            print(f"  Early Stopping: GLOBAL (patience={patience})")
+            print(f"  Stage epochs = FIXED")
+        print()
+        for stage_num, stage_epochs in stages:
+            print(f"  Stage {stage_num}: {stage_epochs} epochs (max)" if early_stopping_per_stage else f"  Stage {stage_num}: {stage_epochs} epochs")
+        print()
 
-        prev_val_loss = val_loss
+        epoch = args.start_epoch
+        for stage_num, stage_epochs in stages:
+            print(f"\n{'#'*80}")
+            print(f"# CURRICULUM STAGE {stage_num}: {curriculum_config[f'stage{stage_num}']['description']}")
+            print(f"{'#'*80}\n")
 
-        # Print summary
-        print(f"\n{'─'*80}")
-        print(f"📊 Epoch {epoch+1} Summary:")
-        print(f"{'─'*80}")
-        print(f"  Train Loss: {tr_loss:.4f} | Train Acc: {tr_acc:.2f}%")
-        print(f"  Val Loss:   {val_loss:.4f} {loss_delta_str} | Val Acc: {val_acc:.2f}%")
-        print(f"  Time: {epoch_time:.2f}s")
-        print(f"{'─'*80}")
+            # Initialize stage-specific early stopping variables
+            if early_stopping_per_stage:
+                stage_best_val_loss = float('inf')
+                stage_patience_counter = 0
+                print(f"[Stage {stage_num}] Per-stage early stopping enabled (patience={stage_patience_limit})\n")
 
-        # Log to tensorboard
-        writer.add_scalar("Loss/train", tr_loss, epoch)
-        writer.add_scalar("Loss/val", val_loss, epoch)
-        writer.add_scalar("Accuracy/train", tr_acc, epoch)
-        writer.add_scalar("Accuracy/val", val_acc, epoch)
+            # Create curriculum sampler for this stage
+            train_sampler = CurriculumNoiseSampler(
+                dataset=None,
+                noise_labels=curriculum_data['noise_labels'],
+                label_dict=curriculum_data['label_dict'],
+                clean_bonafide_list=curriculum_data['clean_bonafide_list'],
+                clean_spoof_list=curriculum_data['clean_spoof_list'],
+                base_dir=curriculum_data['base_dir'],
+                batch_size=args.batch_size,
+                curriculum_stage=stage_num
+            )
 
-        # Log to file
-        with open(log_file, "a") as f:
-            f.write(f"{epoch},{tr_loss:.4f},{tr_acc:.2f},"
-                    f"{val_loss:.4f},{val_acc:.2f}\n")
+            train_loader = (train_sampler, curriculum_data['base_dir'], curriculum_data['args'])
 
-        # Early stopping check
-        if val_loss < best_val_loss:
-            improvement = best_val_loss - val_loss
-            best_val_loss = val_loss
-            patience_counter = 0
-            # Save best model
-            torch.save(model.state_dict(), args.model_save_path)
-            print(f"✅ Validation loss improved by {improvement:.4f}! Model saved to {args.model_save_path}")
-        else:
-            patience_counter += 1
-            print(f"⚠️  No improvement. Patience: {patience_counter}/{patience}")
+            # Train for this stage's epochs
+            for stage_epoch in range(stage_epochs):
+                if epoch >= args.num_epochs:
+                    break
 
-            if patience_counter >= patience:
-                print(f"\n🛑 Early stopping triggered after {epoch + 1} epochs")
+                print(f"\n{'='*80}")
+                print(f"Epoch {epoch+1}/{args.num_epochs} [Stage {stage_num}, Epoch {stage_epoch+1}/{stage_epochs}]")
+                print(f"{'='*80}")
+
+                epoch_start_time = time.time()
+
+                # Train
+                tr_loss, tr_acc = train_epoch(train_loader, model, optimizer, device, epoch,
+                                             use_balance_training=False, use_curriculum=True,
+                                             curriculum_stage=stage_num)
+
+                # Validate
+                val_loss, val_acc = eval_epoch(dev_loader, model, device, epoch, use_balance_training=True)
+
+                epoch_time = time.time() - epoch_start_time
+
+                # Calculate loss delta
+                if epoch > args.start_epoch:
+                    loss_delta = val_loss - prev_val_loss
+                    loss_delta_str = f"({loss_delta:+.4f})"
+                else:
+                    loss_delta_str = ""
+
+                prev_val_loss = val_loss
+
+                # Print summary
+                print(f"\n{'─'*80}")
+                print(f"📊 Epoch {epoch+1} Summary [Stage {stage_num}]:")
+                print(f"{'─'*80}")
+                print(f"  Train Loss: {tr_loss:.4f} | Train Acc: {tr_acc:.2f}%")
+                print(f"  Val Loss:   {val_loss:.4f} {loss_delta_str} | Val Acc: {val_acc:.2f}%")
+                print(f"  Time: {epoch_time:.2f}s")
+                print(f"{'─'*80}")
+
+                # Log to tensorboard
+                writer.add_scalar("Loss/train", tr_loss, epoch)
+                writer.add_scalar("Loss/val", val_loss, epoch)
+                writer.add_scalar("Accuracy/train", tr_acc, epoch)
+                writer.add_scalar("Accuracy/val", val_acc, epoch)
+                writer.add_scalar("Curriculum/stage", stage_num, epoch)
+
+                # Log to file
+                with open(log_file, "a") as f:
+                    f.write(f"{epoch},{tr_loss:.4f},{tr_acc:.2f},"
+                            f"{val_loss:.4f},{val_acc:.2f},{stage_num}\n")
+
+                # Early stopping check
+                if early_stopping_per_stage:
+                    # PER-STAGE early stopping
+                    if val_loss < stage_best_val_loss:
+                        improvement = stage_best_val_loss - val_loss
+                        stage_best_val_loss = val_loss
+                        stage_patience_counter = 0
+
+                        # Also update global best and save model
+                        if val_loss < best_val_loss:
+                            best_val_loss = val_loss
+                            torch.save(model.state_dict(), args.model_save_path)
+                            print(f"✅ [Stage {stage_num}] Validation loss improved by {improvement:.4f}! Model saved to {args.model_save_path}")
+                        else:
+                            print(f"✅ [Stage {stage_num}] Stage best improved by {improvement:.4f} (global best: {best_val_loss:.4f})")
+                    else:
+                        stage_patience_counter += 1
+                        print(f"⚠️  [Stage {stage_num}] No improvement. Stage patience: {stage_patience_counter}/{stage_patience_limit}")
+
+                        if stage_patience_counter >= stage_patience_limit:
+                            print(f"\n🛑 [Stage {stage_num}] Stage early stopping triggered after {stage_epoch + 1} epochs")
+                            print(f"   Moving to next stage...")
+                            break
+                else:
+                    # GLOBAL early stopping (original behavior)
+                    if val_loss < best_val_loss:
+                        improvement = best_val_loss - val_loss
+                        best_val_loss = val_loss
+                        patience_counter = 0
+                        # Save best model
+                        torch.save(model.state_dict(), args.model_save_path)
+                        print(f"✅ Validation loss improved by {improvement:.4f}! Model saved to {args.model_save_path}")
+                    else:
+                        patience_counter += 1
+                        print(f"⚠️  No improvement. Patience: {patience_counter}/{patience}")
+
+                        if patience_counter >= patience:
+                            print(f"\n🛑 Early stopping triggered after {epoch + 1} epochs")
+                            break
+
+                epoch += 1
+
+            # Check if global early stopping was triggered (only for non-per-stage mode)
+            if not early_stopping_per_stage and patience_counter >= patience:
                 break
+
+    else:
+        # BASELINE OR BALANCE TRAINING MODE (original loop)
+        for epoch in range(args.start_epoch, args.num_epochs):
+            print(f"\n{'='*80}")
+            print(f"Epoch {epoch+1}/{args.num_epochs}")
+            print(f"{'='*80}")
+
+            epoch_start_time = time.time()
+
+            # Train
+            tr_loss, tr_acc = train_epoch(train_loader, model, optimizer, device, epoch, use_balance_training)
+
+            # Validate
+            val_loss, val_acc = eval_epoch(dev_loader, model, device, epoch, use_balance_training)
+
+            epoch_time = time.time() - epoch_start_time
+
+            # Calculate loss delta
+            if epoch > args.start_epoch:
+                loss_delta = val_loss - prev_val_loss
+                loss_delta_str = f"({loss_delta:+.4f})"
+            else:
+                loss_delta_str = ""
+
+            prev_val_loss = val_loss
+
+            # Print summary
+            print(f"\n{'─'*80}")
+            print(f"📊 Epoch {epoch+1} Summary:")
+            print(f"{'─'*80}")
+            print(f"  Train Loss: {tr_loss:.4f} | Train Acc: {tr_acc:.2f}%")
+            print(f"  Val Loss:   {val_loss:.4f} {loss_delta_str} | Val Acc: {val_acc:.2f}%")
+            print(f"  Time: {epoch_time:.2f}s")
+            print(f"{'─'*80}")
+
+            # Log to tensorboard
+            writer.add_scalar("Loss/train", tr_loss, epoch)
+            writer.add_scalar("Loss/val", val_loss, epoch)
+            writer.add_scalar("Accuracy/train", tr_acc, epoch)
+            writer.add_scalar("Accuracy/val", val_acc, epoch)
+
+            # Log to file
+            with open(log_file, "a") as f:
+                f.write(f"{epoch},{tr_loss:.4f},{tr_acc:.2f},"
+                        f"{val_loss:.4f},{val_acc:.2f}\n")
+
+            # Early stopping check
+            if val_loss < best_val_loss:
+                improvement = best_val_loss - val_loss
+                best_val_loss = val_loss
+                patience_counter = 0
+                # Save best model
+                torch.save(model.state_dict(), args.model_save_path)
+                print(f"✅ Validation loss improved by {improvement:.4f}! Model saved to {args.model_save_path}")
+            else:
+                patience_counter += 1
+                print(f"⚠️  No improvement. Patience: {patience_counter}/{patience}")
+
+                if patience_counter >= patience:
+                    print(f"\n🛑 Early stopping triggered after {epoch + 1} epochs")
+                    break
 
     total_time = time.time() - start_time_total
 

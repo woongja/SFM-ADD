@@ -1,0 +1,89 @@
+================================================================================
+AUGMENTATION TEST REPORT
+================================================================================
+
+
+================================================================================
+STAGE 1
+================================================================================
+
+Note: Stage 1 uses clean samples only (no augmentation)
+
+Total augmentations: 1
+Successful: 1
+Failed: 0
+
+Augmentation         Status     SNR (dB)     RMS Ratio    Output File
+------------------------------------------------------------------------------------------------------------------------
+clean                SUCCESS    N/A          1.0000       clean.wav
+
+
+================================================================================
+STAGE 2
+================================================================================
+
+Total augmentations: 10
+Successful: 10
+Failed: 0
+
+Augmentation         Status     SNR (dB)     RMS Ratio    Output File
+------------------------------------------------------------------------------------------------------------------------
+background_music     SUCCESS    30.03        1.0007       background_music.wav
+background_noise     SUCCESS    27.33        1.0009       background_noise.wav
+bandpassfilter       SUCCESS    -2.00        0.9310       bandpassfilter.wav
+echo                 SUCCESS    11.97        1.0321       echo.wav
+gaussian_noise       SUCCESS    9.76         1.0515       gaussian_noise.wav
+pink_noise           SUCCESS    47.22        1.0000       pink_noise.wav
+pitch_shift          SUCCESS    -1.70        0.6839       pitch_shift.wav
+reverberation        SUCCESS    -4.43        1.3426       reverberation.wav
+time_stretch         SUCCESS    N/A (length  0.6640       time_stretch.wav
+white_noise          SUCCESS    27.00        1.0009       white_noise.wav
+
+
+================================================================================
+STAGE 3
+================================================================================
+
+Total augmentations: 10
+Successful: 10
+Failed: 0
+
+Augmentation         Status     SNR (dB)     RMS Ratio    Output File
+------------------------------------------------------------------------------------------------------------------------
+background_music     SUCCESS    19.99        1.0057       background_music.wav
+background_noise     SUCCESS    21.19        1.0033       background_noise.wav
+bandpassfilter       SUCCESS    0.12         0.9651       bandpassfilter.wav
+echo                 SUCCESS    3.31         1.2137       echo.wav
+gaussian_noise       SUCCESS    -1.99        1.6067       gaussian_noise.wav
+pink_noise           SUCCESS    34.68        1.0002       pink_noise.wav
+pitch_shift          SUCCESS    -1.65        0.6767       pitch_shift.wav
+reverberation        SUCCESS    -3.52        1.1142       reverberation.wav
+time_stretch         SUCCESS    N/A (length  0.6243       time_stretch.wav
+white_noise          SUCCESS    23.90        1.0022       white_noise.wav
+
+
+================================================================================
+STAGE 4
+================================================================================
+
+Total augmentations: 10
+Successful: 10
+Failed: 0
+
+Augmentation         Status     SNR (dB)     RMS Ratio    Output File
+------------------------------------------------------------------------------------------------------------------------
+background_music     SUCCESS    12.13        1.0299       background_music.wav
+background_noise     SUCCESS    13.12        1.0235       background_noise.wav
+bandpassfilter       SUCCESS    -2.60        0.9064       bandpassfilter.wav
+echo                 SUCCESS    2.28         1.2680       echo.wav
+gaussian_noise       SUCCESS    -8.53        2.8559       gaussian_noise.wav
+pink_noise           SUCCESS    20.38        1.0049       pink_noise.wav
+pitch_shift          SUCCESS    -1.70        0.6903       pitch_shift.wav
+reverberation        SUCCESS    -2.93        0.9989       reverberation.wav
+time_stretch         SUCCESS    N/A (length  0.6916       time_stretch.wav
+white_noise          SUCCESS    9.69         1.0525       white_noise.wav
+
+
+================================================================================
+END OF REPORT
+================================================================================

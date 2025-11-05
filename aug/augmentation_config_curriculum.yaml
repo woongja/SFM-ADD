@@ -1,0 +1,210 @@
+# Curriculum Learning Augmentation Configuration
+# SNR-based progressive difficulty: All noise types with increasing intensity
+
+# ============================================
+# Stage 1: Clean Only (5-10 epochs)
+# ============================================
+# No augmentation applied
+
+# ============================================
+# Stage 2: Very Light Noise - High SNR (5-10 epochs)
+# ============================================
+# All augmentation types with minimal intensity
+
+stage2:
+  background_noise:
+    aug_type: background_noise
+    noise_path: "/home/woongjae/wildspoof/Datasets/noise"
+    snr_db_min: 25
+    snr_db_max: 35
+
+  background_music:
+    aug_type: background_music
+    music_path: "/home/woongjae/wildspoof/Datasets/music"
+    snr_db_min: 25
+    snr_db_max: 35
+
+  gaussian_noise:
+    aug_type: gaussian_noise
+    min_std_dev: 0.005
+    max_std_dev: 0.02
+    mean: 0.0
+
+  white_noise:
+    aug_type: white_noise
+    min_snr_db: 25
+    max_snr_db: 35
+
+  pink_noise:
+    aug_type: pink_noise
+    min_snr_db: 25
+    max_snr_db: 35
+
+  bandpassfilter:
+    aug_type: bandpassfilter
+    min_low_cutoff: 100
+    max_low_cutoff: 500
+    min_high_cutoff: 3500
+    max_high_cutoff: 4000
+
+  pitch_shift:
+    aug_type: pitch_shift
+    min_semitones: -2
+    max_semitones: 2
+
+  time_stretch:
+    aug_type: time_stretch
+    min_factor: 0.9
+    max_factor: 1.1
+
+  # auto_tune:
+  #   aug_type: auto_tune
+  #   correction_method: closest
+  #   strength: 0.3  # Light correction
+
+  echo:
+    aug_type: echo
+    min_delay: 0.05
+    max_delay: 0.5
+    min_decay: 0.2
+    max_decay: 0.4
+
+  reverberation:
+    aug_type: reverberation
+    rir_path: "/home/woongjae/wildspoof/Datasets/RIRS_NOISES"
+    mix_ratio: 0.3  # Light reverb
+
+# ============================================
+# Stage 3: Light-Medium Noise - Medium-High SNR (5-10 epochs)
+# ============================================
+# All augmentation types with moderate intensity
+
+stage3:
+  background_noise:
+    aug_type: background_noise
+    noise_path: "/home/woongjae/wildspoof/Datasets/noise"
+    snr_db_min: 15
+    snr_db_max: 25
+
+  background_music:
+    aug_type: background_music
+    music_path: "/home/woongjae/wildspoof/Datasets/music"
+    snr_db_min: 15
+    snr_db_max: 25
+
+  gaussian_noise:
+    aug_type: gaussian_noise
+    min_std_dev: 0.02
+    max_std_dev: 0.08
+    mean: 0.0
+
+  white_noise:
+    aug_type: white_noise
+    min_snr_db: 15
+    max_snr_db: 25
+
+  pink_noise:
+    aug_type: pink_noise
+    min_snr_db: 15
+    max_snr_db: 25
+
+  bandpassfilter:
+    aug_type: bandpassfilter
+    min_low_cutoff: 100
+    max_low_cutoff: 500
+    min_high_cutoff: 2500
+    max_high_cutoff: 3500
+
+  pitch_shift:
+    aug_type: pitch_shift
+    min_semitones: -3
+    max_semitones: 3
+
+  time_stretch:
+    aug_type: time_stretch
+    min_factor: 0.75
+    max_factor: 1.25
+
+  # auto_tune:
+  #   aug_type: auto_tune
+  #   correction_method: closest
+  #   strength: 0.6  # Moderate correction
+
+  echo:
+    aug_type: echo
+    min_delay: 0.1
+    max_delay: 1.0
+    min_decay: 0.3
+    max_decay: 0.7
+
+  reverberation:
+    aug_type: reverberation
+    rir_path: "/home/woongjae/wildspoof/Datasets/RIRS_NOISES"
+    mix_ratio: 0.5  # Moderate reverb
+
+# ============================================
+# Stage 4: Strong Noise - Low SNR (5-10 epochs)
+# ============================================
+# All augmentation types with maximum intensity (original config values)
+
+stage4:
+  background_noise:
+    aug_type: background_noise
+    noise_path: "/home/woongjae/wildspoof/Datasets/noise"
+    snr_db_min: 5
+    snr_db_max: 15
+
+  background_music:
+    aug_type: background_music
+    music_path: "/home/woongjae/wildspoof/Datasets/music"
+    snr_db_min: 5
+    snr_db_max: 15
+
+  gaussian_noise:
+    aug_type: gaussian_noise
+    min_std_dev: 0.01
+    max_std_dev: 0.2
+    mean: 0.0
+
+  white_noise:
+    aug_type: white_noise
+    min_snr_db: 5
+    max_snr_db: 15
+
+  pink_noise:
+    aug_type: pink_noise
+    min_snr_db: 5
+    max_snr_db: 15
+
+  bandpassfilter:
+    aug_type: bandpassfilter
+    min_low_cutoff: 100
+    max_low_cutoff: 500
+    min_high_cutoff: 2000
+    max_high_cutoff: 4000
+
+  pitch_shift:
+    aug_type: pitch_shift
+    min_semitones: -5
+    max_semitones: 5
+
+  time_stretch:
+    aug_type: time_stretch
+    min_factor: 0.6
+    max_factor: 1.4
+
+  # auto_tune:
+  #   aug_type: auto_tune
+  #   correction_method: closest
+
+  echo:
+    aug_type: echo
+    min_delay: 0.05
+    max_delay: 1.5
+    min_decay: 0.2
+    max_decay: 1.0
+
+  reverberation:
+    aug_type: reverberation
+    rir_path: "/home/woongjae/wildspoof/Datasets/RIRS_NOISES"
+    mix_ratio: 0.7  # Strong reverb

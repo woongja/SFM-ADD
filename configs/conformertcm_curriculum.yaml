@@ -1,0 +1,61 @@
+# Conformer-TCM Curriculum Learning Configuration - RANDOM SAMPLING VERSION
+# SNR-based progressive training strategy with RANDOM (not balanced) sampling
+
+model:
+  name: conformertcm
+  emb_size: 144
+  heads: 4
+  kernel_size: 31
+  num_encoders: 4
+
+data:
+  name: data_utils_curriculum  # Use RANDOM SAMPLING curriculum data loader
+  n_mels: 64
+  n_fft: 512
+  hop_length: 160
+  win_length: 400
+  fmin: 20
+  fmax: 7600
+  mean_norm: true
+  std_norm: true
+
+# Curriculum Learning Settings
+curriculum:
+  enabled: true
+
+  # Early Stopping Strategy
+  # - If true: Each stage uses early stopping (epochs = max limit)
+  # - If false: Each stage uses fixed epochs (original behavior)
+  early_stopping_per_stage: true
+  stage_patience: 3  # Patience for each stage (only used if early_stopping_per_stage=true)
+
+  # Stage 1: Clean Only
+  stage1:
+    epochs: 10  # Max epochs if early_stopping_per_stage=true, Fixed if false
+    description: "Clean samples only - Basic feature learning"
+
+  # Stage 2: Light Noise (High SNR)
+  stage2:
+    epochs: 15  # Max epochs if early_stopping_per_stage=true, Fixed if false
+    description: "All noise types with high SNR / light intensity"
+
+  # Stage 3: Medium Noise (Medium SNR)
+  stage3:
+    epochs: 15  # Max epochs if early_stopping_per_stage=true, Fixed if false
+    description: "All noise types with medium SNR / medium intensity"
+
+  # Stage 4: Strong Noise (Low SNR)
+  stage4:
+    epochs: 20  # Max epochs if early_stopping_per_stage=true, Fixed if false
+    description: "All noise types with low SNR / strong intensity"
+
+# If early_stopping_per_stage = true:
+#   - Stage epochs = MAX limit
+#   - Each stage stops early when val loss doesn't improve for 'stage_patience' epochs
+#   - More adaptive, each stage gets sufficient training
+# If early_stopping_per_stage = false:
+#   - Stage epochs = FIXED
+#   - Total epochs: 10+15+15+20 = 60 (but will be less with early stopping)
+#   - Simpler, more predictable
+#
+# NOTE: This version uses RANDOM SAMPLING (not balanced bonafide/spoof ratio)

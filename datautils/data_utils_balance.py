@@ -273,9 +273,10 @@ class Dataset_dev(Dataset):
         self.base_dir = base_dir
         self.cut = 64600
 
-        # 12개 noise types (11 augmentation + clean)
+        # 11개 noise types (10 augmentation + clean)
+        # Note: auto_tune removed (not a true auto-tune implementation)
         self.augmentation_noise_types = [
-            'auto_tune', 'background_music', 'background_noise', 'bandpassfilter',
+            'background_music', 'background_noise', 'bandpassfilter',
             'echo', 'gaussian_noise', 'pink_noise', 'pitch_shift',
             'reverberation', 'time_stretch', 'white_noise', 'clean'
         ]
@@ -401,8 +402,9 @@ class BalancedNoiseSampler(Sampler):
         self.batch_size = batch_size
 
         # Available noise types for augmentation (excluding 'clean')
+        # Note: auto_tune removed (not a true auto-tune implementation)
         self.augmentation_noise_types = [
-            'auto_tune', 'background_music', 'background_noise', 'bandpassfilter',
+            'background_music', 'background_noise', 'bandpassfilter',
             'echo', 'gaussian_noise', 'pink_noise', 'pitch_shift',
             'reverberation', 'time_stretch', 'white_noise'
         ]
@@ -411,17 +413,17 @@ class BalancedNoiseSampler(Sampler):
         print(f"  Clean bonafide samples: {len(clean_bonafide_list)}")
         print(f"  Clean spoof samples: {len(clean_spoof_list)}")
         print(f"  Augmentation types: {len(self.augmentation_noise_types)}")
-        print(f"  Batch size: {batch_size} (11 aug bonafide + 11 aug spoof + 1 clean bonafide + 1 clean spoof)")
+        print(f"  Batch composition: {len(self.augmentation_noise_types)} aug types × 2 (bonafide+spoof) + 2 clean = {batch_size}")
 
     def __iter__(self):
         num_batches = len(self)
         for _ in range(num_batches):
             batch_indices = []
 
-            # 1. Sample clean bonafide and spoof (will be returned with online augmentation via Dataset)
-            # Each augmentation type gets one clean bonafide + one clean spoof
+            # 1. Each augmentation type gets one bonafide + one spoof
+            # 10 augmentation types × 2 = 20 samples
             for noise_type in self.augmentation_noise_types:
-                # Add bonafide with target noise_type (augmentation will be applied in Dataset)
+                # Add bonafide with target noise_type
                 clean_b = random.choice(self.clean_bonafide_list)
                 batch_indices.append((clean_b, noise_type, 1))  # (utt_id, target_noise, label)
 
@@ -435,6 +437,7 @@ class BalancedNoiseSampler(Sampler):
             batch_indices.append((clean_b_orig, 'clean', 1))
             batch_indices.append((clean_s_orig, 'clean', 0))
 
+            # Total: 10 aug types × 2 + 2 clean = 22 samples
             random.shuffle(batch_indices)
             yield batch_indices
 

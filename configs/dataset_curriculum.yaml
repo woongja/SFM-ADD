@@ -1,0 +1,32 @@
+# Curriculum Learning Dataset Configuration
+# Uses data_utils_curriculum.py with CurriculumNoiseSampler
+
+itw:
+  database_path: /home/woongjae/wildspoof/Datasets/itw
+  protocol_path: /home/woongjae/wildspoof/protocols/protocol_itw.txt
+  eval_output: /home/woongjae/wildspoof/SFM-ADD/results/curriculum/eval_itw.txt
+
+add2022:
+  database_path: /home/woongjae/wildspoof/Datasets/add2022
+  protocol_path: /home/woongjae/wildspoof/protocols/protocol_add2022.txt
+  eval_output: /home/woongjae/wildspoof/SFM-ADD/results/curriculum/eval_add2022.txt
+
+wildspoof:
+  database_path: /home/woongjae/wildspoof/Datasets
+  protocol_path: /home/woongjae/wildspoof/protocols/protocol_wildspoof.txt
+  eval_output: /home/woongjae/wildspoof/SFM-ADD/results/curriculum/eval_wildspoof.txt
+
+deepen:
+  database_path: /home/woongjae/wildspoof/Datasets/shortcutASV
+  protocol_path: /home/woongjae/wildspoof/protocols/protocol_deepen.txt
+  eval_output: /home/woongjae/wildspoof/SFM-ADD/results/curriculum/eval_deepen.txt
+
+asv19_noise:
+  database_path: /home/woongjae/wildspoof/Datasets/asv19_noise
+  protocol_path: /home/woongjae/wildspoof/protocols/protocol_asv19_noise.txt
+  eval_output: /home/woongjae/wildspoof/SFM-ADD/results/curriculum/eval_asv19_noise.txt
+
+df21_noise:
+  database_path: /home/woongjae/wildspoof/Datasets/df21_noise
+  protocol_path: /home/woongjae/wildspoof/protocols/protocol_df21_noise.txt
+  eval_output: /home/woongjae/wildspoof/SFM-ADD/results/curriculum/eval_df21_noise.txt
